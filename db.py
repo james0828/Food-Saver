@@ -56,6 +56,11 @@ CREATE_ORDER = """INSERT INTO orders (uuid, owner_id, buyer_id, created_time, pr
 RETRIEVE_ORDER = """SELECT * FROM orders where uuid = %s"""
 UPDATE_ORDER = """UPDATE orders set {} WHERE uuid = %s"""
 
+LIST_USER_LOCATION_WITH_USER_ID = """SELECT * FROM user_location where user_id = %s ORDER BY created_time ASC"""
+LIST_USER_LOCATION = """SELECT * FROM user_location ORDER BY created_time ASC"""
+CREATE_USER_LOCATION = """INSERT INTO user_location (uuid, user_id, lat, lng, created_time) VALUES (%s, %s, %s, %s, %s) """
+DELETE_USER_LOCATION = """DELETE FROM user_location where uuid = %s""" 
+
 class DB:
     def __init__(self):
         self.connect()
@@ -191,5 +196,34 @@ class DB:
 
             return HTTPStatus.OK, 'success'
         except Exception as e:
-            logging.error('Could not update product (reason: %r)', e)
+            logging.error('Could not update order (reason: %r)', e)
+            return HTTPStatus.BAD_REQUEST, 'Something Error Happened'
+    
+    def list_user_location(self, user_id):
+        try:
+            if user_id is None:
+                self.cursor.execute(LIST_USER_LOCATION)
+            else:
+                self.cursor.execute(LIST_USER_LOCATION_WITH_USER_ID, (user_id))
+            return HTTPStatus.OK, self.cursor.fetchall()
+        except Exception as e:
+            logging.error('Could not list user location (reason: %r)', e)
+            return HTTPStatus.BAD_REQUEST, 'Something Error Happened'
+    
+    def create_user_location(self, data):
+        try:
+            self.cursor.execute(CREATE_USER_LOCATION, (uuid.uuid4(), data['user_id'], data['lat'], data['lng'], datetime.now()))
+            self.commit()
+            return HTTPStatus.CREATED, 'success'
+        except Exception as e:
+            logging.error('Could not create user location (reason: %r)', e)
+            return HTTPStatus.BAD_REQUEST, 'Something Error Happened'
+    
+    def delete_user_location(self, uuid):
+        try:
+            self.cursor.execute(DELETE_USER_LOCATION, (uuid,))
+            self.commit()
+            return HTTPStatus.NO_CONTENT, ''
+        except Exception as e:
+            logging.error('Could not delete user location (reason: %r)', e)
             return HTTPStatus.BAD_REQUEST, 'Something Error Happened'
