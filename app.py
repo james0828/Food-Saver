@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from distutils import util
 
 from flask import Flask, jsonify, request, Blueprint
 from flask_cors import CORS, cross_origin
