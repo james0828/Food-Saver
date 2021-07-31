@@ -12,5 +12,3 @@ cors = CORS(app)
 
 app.register_blueprint(order_api, url_prefix='/api/order')
 app.register_blueprint(product_api, url_prefix='/api/product')
-
-app.run(debug=True)
