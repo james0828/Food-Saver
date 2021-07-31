@@ -8,8 +8,40 @@ import pymysql
 
 from config import CONFIG
 
-LIST_PRODUCT = """SELECT * FROM product ORDER BY %s ASC"""
-LIST_PRODUCT_FILTER = """SELECT * FROM product WHERE {} ORDER BY %s ASC"""
+LIST_PRODUCT = """SELECT *, 6378.138 * 2 * ASIN(
+      SQRT(
+        POW(
+          SIN(
+            (
+              %s * PI() / 180 - lat * PI() / 180
+            ) / 2
+          ), 2
+        ) + COS(%s * PI() / 180) * COS(lat * PI() / 180) * POW(
+          SIN(
+            (
+              %s * PI() / 180 - lng * PI() / 180
+            ) / 2
+          ), 2
+        )
+      )
+    ) *1000 AS distance FROM product ORDER BY distance ASC"""
+LIST_PRODUCT_FILTER = """SELECT *, 6378.138 * 2 * ASIN(
+      SQRT(
+        POW(
+          SIN(
+            (
+              %s * PI() / 180 - lat * PI() / 180
+            ) / 2
+          ), 2
+        ) + COS(%s * PI() / 180) * COS(lat * PI() / 180) * POW(
+          SIN(
+            (
+              %s * PI() / 180 - lng * PI() / 180
+            ) / 2
+          ), 2
+        )
+      )
+    ) *1000 AS distance FROM product WHERE {} ORDER BY distance ASC"""
 CREATE_PRODUCT = """INSERT INTO product (uuid, user_id, lat, lng, name, info, number, created_time, category)
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
 """
@@ -41,16 +73,15 @@ class DB:
     def commit(self):
         self.connection.commit()
     
-    def list_product(self, filter_set):
+    def list_product(self, lat, lng, filter_set):
         try:
-            ORDER_FIELD = 'CREATED_TIME'
             if len(filter_set) == 0:
-                self.cursor.execute(LIST_PRODUCT, (ORDER_FIELD,))
+                self.cursor.execute(LIST_PRODUCT, (lat, lat, lng))
             else:
                 filter_str = ''
                 for f in filter_set:
                     filter_str += self.cursor.mogrify("{}=%s".format(f), (filter_set[f],))
-                self.cursor.execute(LIST_PRODUCT_FILTER.format(filter_str), (ORDER_FIELD,))
+                self.cursor.execute(LIST_PRODUCT_FILTER.format(filter_str), (lat, lat, lng))
             
             return HTTPStatus.OK, self.cursor.fetchall()
         except Exception as e:

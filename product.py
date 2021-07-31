@@ -10,14 +10,17 @@ product_api = Blueprint('product', __name__)
 @product_api.route('', methods=['GET'])
 def list():
     filter_set = {}
-    keys = ('user_id',)
+    filter_keys = ('user_id', 'category')
+    input_keys = ('lat', 'lng')
 
-    for key in keys:
-        print(key, request.args.get(key))
+    if any(request.args.get(key, type=float) is None for key in input_keys):
+        return jsonify(message='Parameter Error', code=HTTPStatus.BAD_REQUEST), HTTPStatus.BAD_REQUEST
+
+    for key in filter_keys:
         if request.args.get(key):
             filter_set[key] = request.args.get(key)
 
-    code, ret = db.list_product(filter_set)
+    code, ret = db.list_product(request.args.get('lat', type=float), request.args.get('lng', type=float), filter_set)
 
     if code != HTTPStatus.OK:
         return jsonify(message=ret, code=code), code
