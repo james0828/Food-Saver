@@ -54,6 +54,7 @@ CREATE_ORDER = """INSERT INTO orders (uuid, owner_id, buyer_id, created_time, pr
     VALUES (%s, %s, %s, %s, %s)
 """
 RETRIEVE_ORDER = """SELECT * FROM orders where uuid = %s"""
+COMPLETE_ORDER = """UPDATE orders set status=1 WHERE uuid = %s"""
 UPDATE_ORDER = """UPDATE orders set {} WHERE uuid = %s"""
 
 LIST_USER_LOCATION_WITH_USER_ID = """SELECT * FROM user_location where user_id = %s ORDER BY created_time ASC"""
@@ -197,6 +198,17 @@ class DB:
             return HTTPStatus.OK, 'success'
         except Exception as e:
             logging.error('Could not update order (reason: %r)', e)
+            return HTTPStatus.BAD_REQUEST, 'Something Error Happened'
+    
+    def complete_order(self, uuid):
+        try:
+            self.cursor.execute(COMPLETE_ORDER, (uuid,))
+            self.commit()
+
+            self.cursor.execute(RETRIEVE_ORDER, (uuid,))
+            return HTTPStatus.OK, self.cursor.fetchone()
+        except Exception as e:
+            logging.error('Could not complete order (reason: %r)', e)
             return HTTPStatus.BAD_REQUEST, 'Something Error Happened'
     
     def list_user_location(self, user_id):

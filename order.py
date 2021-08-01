@@ -55,3 +55,12 @@ def update(uuid):
         return jsonify(message=ret, code=code), code
     
     return ret, code
+
+@order_api.route('/<string:uuid>', methods=['POST'])
+def complete(uuid):
+    code, ret = db.complete_order(uuid)
+
+    if code != HTTPStatus.OK:
+        return jsonify(message=ret, code=code), code
+    
+    return ret, code
